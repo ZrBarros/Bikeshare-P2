@@ -14,12 +14,15 @@ public final class SistemaBikeShare {
     private final BigDecimal mensalidadePadrao = configurarMensalidade();
     private EstadoSistema estado = persistencia.carregar();
     private CadastroUsuarios cadastro = new CadastroUsuarios(estado, mensalidadePadrao);
+    private CadastroEstacoes estacoes = new CadastroEstacoes(estado);
 
     public CadastroUsuarios usuarios() { return cadastro; }
+    public CadastroEstacoes estacoes() { return estacoes; }
 
     public void zerar() {
         estado = new EstadoSistema();
         cadastro = new CadastroUsuarios(estado, mensalidadePadrao);
+        estacoes = new CadastroEstacoes(estado);
     }
 
     public void encerrar() { persistencia.salvar(estado); }
