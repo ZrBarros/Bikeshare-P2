@@ -6,7 +6,7 @@ import br.ufal.ic.p2.bikeshare.util.Valores;
 import java.math.BigDecimal;
 import java.util.Locale;
 
-/** Regras de cadastro, consulta, alteração e exclusão de usuários. */
+// Regras de cadastro, consulta, alteração e exclusão de usuários.
 public final class CadastroUsuarios {
     private final EstadoSistema estado;
     private final BigDecimal mensalidadePadrao;
@@ -108,11 +108,11 @@ public final class CadastroUsuarios {
 
     public void remover(String id) {
         Usuario usuario = buscar(id);
-        if (usuario.aluguelAtivo() != null) throw erro("Usuario possui aluguel ativo.");
+        if (usuario.aluguelAtivo() != null) throw erro("Nao e possivel remover usuario com aluguel em andamento.");
         estado.usuarios.remove(id);
     }
 
-    private Usuario buscar(String id) {
+    Usuario buscar(String id) {
         Valores.obrigatorio(id, "Identificacao do usuario nao pode ser nula.");
         Usuario usuario = estado.usuarios.get(id);
         if (usuario == null) throw erro("Usuario nao existe.");

@@ -46,9 +46,9 @@ Está fora do escopo: qualquer interface gráfica ou web, integração com um ga
 
 ---
 
-## Implementação atual: US1–US7
+## Implementação atual: US1–US8
 
-Este diretório parte dos arquivos do repositório original BikeShare: os scripts em `tests/`, a classe `Main`, as assinaturas da `Facade` e o EasyAccept. Foram implementados cadastro, consulta, alteração e remoção de usuários (pessoas físicas e jurídicas), planos avulso e assinante, métodos de pagamento e persistência do cadastro entre execuções. O cadastro de estações (US5) também está implementado, com capacidade inteira positiva, IDs sequenciais, consulta de vagas e persistência. A gestão de bicicletas convencionais e elétricas (US6) e as consultas de disponibilidade (US7) também estão implementadas, incluindo bateria, limite de vagas, remoção e persistência. Bicicletas elétricas abaixo da bateria mínima ocupam vaga, mas não contam como disponíveis. As demais operações permanecem previstas na `Facade` para as etapas seguintes.
+Este diretório parte dos arquivos do repositório original BikeShare: os scripts em `tests/`, a classe `Main`, as assinaturas da `Facade` e o EasyAccept. Foram implementados cadastro, consulta, alteração e remoção de usuários (pessoas físicas e jurídicas), planos avulso e assinante, métodos de pagamento e persistência do cadastro entre execuções. O cadastro de estações (US5) também está implementado, com capacidade inteira positiva, IDs sequenciais, consulta de vagas e persistência. A gestão de bicicletas convencionais e elétricas (US6) e as consultas de disponibilidade (US7) também estão implementadas, incluindo bateria, limite de vagas, remoção e persistência. Bicicletas elétricas abaixo da bateria mínima ocupam vaga, mas não contam como disponíveis. A retirada de bicicletas (US8) cria aluguéis, libera vagas, valida usuário/bateria/pagamento e impede remoção de usuários com corrida ativa. Aluguéis em andamento e seus IDs são persistidos. Devolução e demais operações permanecem previstas na `Facade` para as etapas seguintes.
 
 O código de domínio está em `src/br/ufal/ic/p2/bikeshare/model/`; a lógica de cadastro, em `service/`; a gravação e leitura do estado, em `persistence/`. A configuração `plano.assinante.mensalidadePadrao` fica em `config.properties` (valor inicial: 30,00). O estado é salvo em `bikeshare-state.bin` ao chamar `encerrarSistema` e restaurado quando uma nova `Facade` é criada. `zerarSistema` reinicia o estado em memória; a gravação ocorre ao encerrar.
 
@@ -56,7 +56,7 @@ Para compilar e executar apenas os testes desta etapa, a partir da raiz deste di
 
 ```sh
 javac -cp lib/easyaccept.jar -d out $(find src -name '*.java')
-for teste in us1 us1_1 us2 us3 us3_1 us4 us4_1 us5 us5_1 us6 us6_1 us7; do
+for teste in us1 us1_1 us2 us3 us3_1 us4 us4_1 us5 us5_1 us6 us6_1 us7 us8 us8_1; do
   java -cp out:lib/easyaccept.jar Main "tests/$teste.txt"
 done
 ```
@@ -64,4 +64,4 @@ done
 Os scripts com sufixo `_1` são executados depois do respectivo script sem sufixo para validar a persistência em um novo processo. Sem argumentos, `Main` mantém a execução integral dos scripts originais, inclusive das US ainda não implementadas.
 
 
-Validação de US1–US7: 509 verificações aprovadas nos doze scripts acima. O limite `bicicleta.eletrica.bateriaMinima` é configurável em `config.properties` (padrão: 15%).
+Validação de US1–US8: 632 verificações aprovadas nos quatorze scripts acima. O limite `bicicleta.eletrica.bateriaMinima` é configurável em `config.properties` (padrão: 15%).

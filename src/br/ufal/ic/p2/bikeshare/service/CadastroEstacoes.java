@@ -1,13 +1,17 @@
 package br.ufal.ic.p2.bikeshare.service;
 
 import br.ufal.ic.p2.bikeshare.model.Estacao;
+import br.ufal.ic.p2.bikeshare.model.Bicicleta;
 import br.ufal.ic.p2.bikeshare.util.Valores;
 
 public final class CadastroEstacoes {
     private final EstadoSistema estado;
 
-    public CadastroEstacoes(EstadoSistema estado) {
+    private final int bateriaMinima;
+
+    public CadastroEstacoes(EstadoSistema estado, int bateriaMinima) {
         this.estado = estado;
+        this.bateriaMinima = bateriaMinima;
     }
 
     public String criar(String nome, String endereco, String capacidade) {
@@ -32,11 +36,17 @@ public final class CadastroEstacoes {
     }
 
     public String bicicletasDisponiveis(String id) {
-        // Por enquanto as estacoes estao vazias; a elegibilidade entra com a US6.
-        return Integer.toString(buscar(id).quantidadeBicicletas());
+        Estacao estacao = buscar(id);
+        int disponiveis = 0;
+        for (Bicicleta bicicleta : estado.bicicletas.values()) {
+            if (estacao.id().equals(bicicleta.estacao()) && bicicleta.disponivel(bateriaMinima)) {
+                disponiveis++;
+            }
+        }
+        return Integer.toString(disponiveis);
     }
 
-    private Estacao buscar(String id) {
+    Estacao buscar(String id) {
         Valores.obrigatorio(id, "Identificacao da estacao nao pode ser nula.");
         Estacao estacao = estado.estacoes.get(id);
         if (estacao == null) throw new IllegalArgumentException("Estacao nao existe.");

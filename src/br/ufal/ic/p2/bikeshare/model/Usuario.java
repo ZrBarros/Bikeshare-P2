@@ -6,7 +6,7 @@ import br.ufal.ic.p2.bikeshare.util.Valores;
 import java.io.Serializable;
 import java.math.BigDecimal;
 
-/** Identidade e comportamento comuns aos dois tipos de usuário. */
+// Identidade e comportamento comuns aos dois tipos de usuário
 public abstract class Usuario implements Serializable {
     private static final long serialVersionUID = 1L;
     private final String id;
@@ -38,6 +38,18 @@ public abstract class Usuario implements Serializable {
     public void usarCarteira() { this.pagamento = carteira; }
     public void aluguelAtivo(String id) { this.aluguelAtivo = id; }
     public void adicionarPendencia(BigDecimal valor) { pendencias = pendencias.add(valor); }
+
+    public void validarNovoAluguel() {
+        if (pendencias.signum() > 0) throw new IllegalArgumentException("Usuario inadimplente.");
+        if (aluguelAtivo != null) {
+            throw new IllegalArgumentException("Usuario ja possui um aluguel em andamento.");
+        }
+    }
+
+    public void validarPagamento() {
+        if (pagamento == null) throw new IllegalArgumentException("Metodo de pagamento nao cadastrado.");
+        pagamento.validarRetirada();
+    }
 
     public void recarregar(BigDecimal valor) {
         if (pagamento == null) {

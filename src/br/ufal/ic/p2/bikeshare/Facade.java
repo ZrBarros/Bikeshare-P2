@@ -81,19 +81,19 @@ public class Facade {
     // =====================================================================
 
     public void adicionarBicicleta(String estacao, String bicicleta, String tipo) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        sistema.bicicletas().adicionar(estacao, bicicleta, tipo, null);
     }
 
     public void adicionarBicicleta(String estacao, String bicicleta, String tipo, String nivelBateria) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        sistema.bicicletas().adicionar(estacao, bicicleta, tipo, nivelBateria);
     }
 
     public void removerBicicleta(String estacao, String bicicleta) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        sistema.bicicletas().remover(estacao, bicicleta);
     }
 
     public String getAtributoBicicleta(String bicicleta, String atributo) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return sistema.bicicletas().atributo(bicicleta, atributo);
     }
 
     // =====================================================================
@@ -109,7 +109,7 @@ public class Facade {
     }
 
     public String getEstadoBicicleta(String bicicleta) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return sistema.bicicletas().estado(bicicleta);
     }
 
     // =====================================================================
@@ -117,7 +117,7 @@ public class Facade {
     // =====================================================================
 
     public String retirarBicicleta(String usuario, String estacao, String bicicleta, String data) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return sistema.alugueis().retirar(usuario, estacao, bicicleta, data);
     }
 
     // =====================================================================
@@ -141,7 +141,7 @@ public class Facade {
     }
 
     public String getAtributoAluguel(String aluguel, String atributo) {
-        throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
+        return sistema.alugueis().atributo(aluguel, atributo);
     }
 
     // =====================================================================
@@ -192,9 +192,7 @@ public class Facade {
         throw new UnsupportedOperationException(AINDA_NAO_IMPLEMENTADO);
     }
 
-    // =====================================================================
-    // Ciclo de vida do sistema
-    // =====================================================================
+    // sistema
 
     public void zerarSistema() {
         sistema.zerar();

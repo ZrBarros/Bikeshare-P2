@@ -14,6 +14,10 @@ public final class SaldoPreCarregado implements MetodoPagamento {
         return saldo;
     }
 
+    public void validarRetirada() {
+        if (saldo.signum() <= 0) throw new IllegalArgumentException("Saldo insuficiente.");
+    }
+
     public void recarregar(BigDecimal valor) {
         saldo = saldo.add(valor);
     }

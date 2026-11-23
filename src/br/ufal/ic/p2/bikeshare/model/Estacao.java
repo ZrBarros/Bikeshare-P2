@@ -19,6 +19,13 @@ public final class Estacao implements Serializable {
         this.capacidade = capacidade;
     }
 
+    public void adicionar(String bicicleta) {
+        if (vagasLivres() == 0) throw new IllegalArgumentException("Estacao sem vagas disponiveis.");
+        bicicletas.add(bicicleta);
+    }
+
+    public void remover(String bicicleta) { bicicletas.remove(bicicleta); }
+
     public String id() { return id; }
     public String nome() { return nome; }
     public String endereco() { return endereco; }
