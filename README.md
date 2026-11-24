@@ -46,9 +46,9 @@ Está fora do escopo: qualquer interface gráfica ou web, integração com um ga
 
 ---
 
-## Implementação atual: US1–US8
+## Implementação atual: US1–US9 (Milestone 1)
 
-Este diretório parte dos arquivos do repositório original BikeShare: os scripts em `tests/`, a classe `Main`, as assinaturas da `Facade` e o EasyAccept. Foram implementados cadastro, consulta, alteração e remoção de usuários (pessoas físicas e jurídicas), planos avulso e assinante, métodos de pagamento e persistência do cadastro entre execuções. O cadastro de estações (US5) também está implementado, com capacidade inteira positiva, IDs sequenciais, consulta de vagas e persistência. A gestão de bicicletas convencionais e elétricas (US6) e as consultas de disponibilidade (US7) também estão implementadas, incluindo bateria, limite de vagas, remoção e persistência. Bicicletas elétricas abaixo da bateria mínima ocupam vaga, mas não contam como disponíveis. A retirada de bicicletas (US8) cria aluguéis, libera vagas, valida usuário/bateria/pagamento e impede remoção de usuários com corrida ativa. Aluguéis em andamento e seus IDs são persistidos. Devolução e demais operações permanecem previstas na `Facade` para as etapas seguintes.
+Este diretório parte dos arquivos do repositório original BikeShare: os scripts em `tests/`, a classe `Main`, as assinaturas da `Facade` e o EasyAccept. Foram implementados cadastro, consulta, alteração e remoção de usuários (pessoas físicas e jurídicas), planos avulso e assinante, métodos de pagamento e persistência do cadastro entre execuções. O cadastro de estações (US5) também está implementado, com capacidade inteira positiva, IDs sequenciais, consulta de vagas e persistência. A gestão de bicicletas convencionais e elétricas (US6) e as consultas de disponibilidade (US7) também estão implementadas, incluindo bateria, limite de vagas, remoção e persistência. Bicicletas elétricas abaixo da bateria mínima ocupam vaga, mas não contam como disponíveis. A retirada de bicicletas (US8) cria aluguéis, libera vagas, valida usuário/bateria/pagamento e impede remoção de usuários com corrida ativa. Aluguéis em andamento e seus IDs são persistidos. A devolução (US9) calcula o valor pelo plano vigente e pelo tipo de bicicleta, simula cobrança por cartão/Pix ou debita o saldo pré-carregado, e atualiza estação, bicicleta e usuário. A carência na mesma estação cancela sem cobrança; o tempo máximo excedido expira o aluguel, gera pendência e coloca a bicicleta em manutenção. Estação cheia ou saldo insuficiente recusam a devolução sem alterar o estado. As operações restantes de US10–US16 ficam para o Milestone 2.
 
 O código de domínio está em `src/br/ufal/ic/p2/bikeshare/model/`; a lógica de cadastro, em `service/`; a gravação e leitura do estado, em `persistence/`. A configuração `plano.assinante.mensalidadePadrao` fica em `config.properties` (valor inicial: 30,00). O estado é salvo em `bikeshare-state.bin` ao chamar `encerrarSistema` e restaurado quando uma nova `Facade` é criada. `zerarSistema` reinicia o estado em memória; a gravação ocorre ao encerrar.
 
@@ -56,7 +56,7 @@ Para compilar e executar apenas os testes desta etapa, a partir da raiz deste di
 
 ```sh
 javac -cp lib/easyaccept.jar -d out $(find src -name '*.java')
-for teste in us1 us1_1 us2 us3 us3_1 us4 us4_1 us5 us5_1 us6 us6_1 us7 us8 us8_1; do
+for teste in us1 us1_1 us2 us3 us3_1 us4 us4_1 us5 us5_1 us6 us6_1 us7 us8 us8_1 us9 us9_1; do
   java -cp out:lib/easyaccept.jar Main "tests/$teste.txt"
 done
 ```
@@ -64,4 +64,23 @@ done
 Os scripts com sufixo `_1` são executados depois do respectivo script sem sufixo para validar a persistência em um novo processo. Sem argumentos, `Main` mantém a execução integral dos scripts originais, inclusive das US ainda não implementadas.
 
 
-Validação de US1–US8: 632 verificações aprovadas nos quatorze scripts acima. O limite `bicicleta.eletrica.bateriaMinima` é configurável em `config.properties` (padrão: 15%).
+Validação de US1–US9: 834 verificações aprovadas nos dezesseis scripts acima. O limite `bicicleta.eletrica.bateriaMinima` é configurável em `config.properties` (padrão: 15%).
+
+
+### Configuração de cobrança
+
+Os parâmetros ficam em `config.properties` e são carregados na criação da `Facade`:
+
+| Propriedade | Padrão |
+|---|---:|
+| `tarifa.avulso.minuto` | 0.50 |
+| `tarifa.assinante.franquiaMinutos` | 60 |
+| `tarifa.assinante.minutoExcedente` | 0.30 |
+| `tarifa.eletrica.adicionalMinuto` | 0.20 |
+| `aluguel.carenciaMinutos` | 2 |
+| `aluguel.tempoMaximoMinutos` | 1440 |
+| `aluguel.penalidadeAtraso` | 10.00 |
+
+O adicional da elétrica incide sobre toda a duração da corrida normal, mesmo dentro da franquia do assinante. Cancelamento e expiração não cobram tarifa nem adicional. Exatamente 1440 minutos ainda é uma corrida normal; acima disso, expira. A mensalidade não é debitada ao devolver. Valores monetários são calculados com `BigDecimal` e arredondados para centavos na cobrança.
+
+A validação foi executada em cópia temporária, com cada script em um processo separado. Para executar manualmente na pasta original, lembre que os scripts usam `zerarSistema` e `encerrarSistema`, substituindo o arquivo de estado local. Nenhum script fornecido foi alterado. Também foram verificados limites personalizados e a leitura de corridas em andamento salvas pela implementação anterior à US9.

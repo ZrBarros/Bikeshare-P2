@@ -1,5 +1,7 @@
 package br.ufal.ic.p2.bikeshare.model;
 
+import java.math.BigDecimal;
+
 public final class BicicletaEletrica extends Bicicleta {
     private static final long serialVersionUID = 1L;
     private final int bateria;
@@ -15,6 +17,10 @@ public final class BicicletaEletrica extends Bicicleta {
     public void validarRetirada(int bateriaMinima) {
         super.validarRetirada(bateriaMinima);
         if (bateria < bateriaMinima) throw new IllegalArgumentException("Nivel de bateria insuficiente.");
+    }
+
+    public BigDecimal adicional(long minutos, Tarifas tarifas) {
+        return tarifas.adicionalEletrica().multiply(BigDecimal.valueOf(minutos));
     }
 
     public boolean disponivel(int bateriaMinima) {

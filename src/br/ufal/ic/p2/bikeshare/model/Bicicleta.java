@@ -1,6 +1,7 @@
 package br.ufal.ic.p2.bikeshare.model;
 
 import java.io.Serializable;
+import java.math.BigDecimal;
 
 public abstract class Bicicleta implements Serializable {
     private static final long serialVersionUID = 1L;
@@ -32,6 +33,13 @@ public abstract class Bicicleta implements Serializable {
         estado = "emUso";
         estacao = null;
     }
+
+    public void devolver(String estacao, boolean manutencao) {
+        this.estacao = estacao;
+        estado = manutencao ? "emManutencao" : "disponivel";
+    }
+
+    public BigDecimal adicional(long minutos, Tarifas tarifas) { return BigDecimal.ZERO; }
 
     protected String nivelBateria() {
         throw new IllegalArgumentException("Bicicleta nao possui bateria.");

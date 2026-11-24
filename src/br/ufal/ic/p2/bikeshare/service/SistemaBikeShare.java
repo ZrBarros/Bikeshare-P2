@@ -1,6 +1,7 @@
 package br.ufal.ic.p2.bikeshare.service;
 
 import br.ufal.ic.p2.bikeshare.persistence.PersistenciaSistema;
+import br.ufal.ic.p2.bikeshare.model.Tarifas;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -14,6 +15,7 @@ public final class SistemaBikeShare {
     private final Properties config = carregarConfiguracao();
     private final BigDecimal mensalidadePadrao = new BigDecimal(
             config.getProperty("plano.assinante.mensalidadePadrao", "30.00"));
+    private final Tarifas tarifas = new Tarifas(config);
     private final int bateriaMinima = configurarBateriaMinima();
     private EstadoSistema estado = persistencia.carregar();
     private CadastroUsuarios cadastro = new CadastroUsuarios(estado, mensalidadePadrao);
@@ -21,7 +23,7 @@ public final class SistemaBikeShare {
 
     private GestaoBicicletas bicicletas = new GestaoBicicletas(estado, estacoes);
 
-    private GestaoAlugueis alugueis = new GestaoAlugueis(estado, cadastro, estacoes, bicicletas, bateriaMinima);
+    private GestaoAlugueis alugueis = new GestaoAlugueis(estado, cadastro, estacoes, bicicletas, bateriaMinima, tarifas);
 
     public GestaoAlugueis alugueis() { return alugueis; }
     public GestaoBicicletas bicicletas() { return bicicletas; }
@@ -33,7 +35,7 @@ public final class SistemaBikeShare {
         cadastro = new CadastroUsuarios(estado, mensalidadePadrao);
         estacoes = new CadastroEstacoes(estado, bateriaMinima);
         bicicletas = new GestaoBicicletas(estado, estacoes);
-        alugueis = new GestaoAlugueis(estado, cadastro, estacoes, bicicletas, bateriaMinima);
+        alugueis = new GestaoAlugueis(estado, cadastro, estacoes, bicicletas, bateriaMinima, tarifas);
     }
 
     public void encerrar() { persistencia.salvar(estado); }

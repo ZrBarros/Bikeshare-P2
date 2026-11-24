@@ -18,6 +18,12 @@ public final class SaldoPreCarregado implements MetodoPagamento {
         if (saldo.signum() <= 0) throw new IllegalArgumentException("Saldo insuficiente.");
     }
 
+    public void cobrar(BigDecimal valor) {
+        MetodoPagamento.super.cobrar(valor);
+        if (saldo.compareTo(valor) < 0) throw new IllegalArgumentException("Saldo insuficiente.");
+        saldo = saldo.subtract(valor);
+    }
+
     public void recarregar(BigDecimal valor) {
         saldo = saldo.add(valor);
     }

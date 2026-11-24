@@ -7,4 +7,5 @@ import java.math.BigDecimal;
 public interface Plano extends Serializable {
     String nome();
     BigDecimal mensalidade();
+    BigDecimal calcular(long minutos, Tarifas tarifas);
 }

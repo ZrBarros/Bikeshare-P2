@@ -12,4 +12,7 @@ public final class PlanoAvulso implements Plano {
     public BigDecimal mensalidade() {
         throw new IllegalArgumentException("Plano nao possui mensalidade.");
     }
+    public BigDecimal calcular(long minutos, Tarifas tarifas) {
+        return tarifas.minutoAvulso().multiply(BigDecimal.valueOf(minutos));
+    }
 }

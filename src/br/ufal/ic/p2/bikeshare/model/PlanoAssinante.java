@@ -17,4 +17,8 @@ public final class PlanoAssinante implements Plano {
     public BigDecimal mensalidade() {
         return mensalidade;
     }
+    public BigDecimal calcular(long minutos, Tarifas tarifas) {
+        return tarifas.minutoExcedente().multiply(
+                BigDecimal.valueOf(Math.max(0, minutos - tarifas.franquiaMinutos())));
+    }
 }

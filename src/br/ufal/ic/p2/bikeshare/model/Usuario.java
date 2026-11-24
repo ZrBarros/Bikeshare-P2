@@ -46,6 +46,16 @@ public abstract class Usuario implements Serializable {
         }
     }
 
+    public BigDecimal calcularTarifa(long minutos, Tarifas tarifas) {
+        return plano.calcular(minutos, tarifas);
+    }
+
+    public void cobrar(BigDecimal valor) {
+        if (valor.signum() == 0) return;
+        if (pagamento == null) throw new IllegalArgumentException("Metodo de pagamento nao cadastrado.");
+        pagamento.cobrar(valor);
+    }
+
     public void validarPagamento() {
         if (pagamento == null) throw new IllegalArgumentException("Metodo de pagamento nao cadastrado.");
         pagamento.validarRetirada();

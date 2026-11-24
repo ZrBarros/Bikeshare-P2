@@ -9,6 +9,11 @@ public interface MetodoPagamento extends Serializable {
 
     default void validarRetirada() { }
 
+    // Cartao e Pix aprovam a cobranca simulada; nao ha gateway externo.
+    default void cobrar(BigDecimal valor) {
+        if (valor.signum() < 0) throw new IllegalArgumentException("Valor deve ser nao-negativo.");
+    }
+
     default String numeroCartao() {
         throw new IllegalArgumentException("Usuario nao usa cartao.");
     }
