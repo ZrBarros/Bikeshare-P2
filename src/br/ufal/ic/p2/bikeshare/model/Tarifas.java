@@ -1,5 +1,7 @@
 package br.ufal.ic.p2.bikeshare.model;
 
+import br.ufal.ic.p2.bikeshare.exception.ConfiguracaoException;
+import br.ufal.ic.p2.bikeshare.util.Valores;
 import java.math.BigDecimal;
 import java.util.Properties;
 
@@ -13,6 +15,7 @@ public final class Tarifas {
     private final long tempoMaximoMinutos;
 
     public Tarifas(Properties config) {
+        Valores.naoNulo(config, "Configuracao nao pode ser nula.");
         minutoAvulso = decimal(config, "tarifa.avulso.minuto", "0.50");
         minutoExcedente = decimal(config, "tarifa.assinante.minutoExcedente", "0.30");
         adicionalEletrica = decimal(config, "tarifa.eletrica.adicionalMinuto", "0.20");
@@ -21,7 +24,7 @@ public final class Tarifas {
         carenciaMinutos = inteiro(config, "aluguel.carenciaMinutos", "2");
         tempoMaximoMinutos = inteiro(config, "aluguel.tempoMaximoMinutos", "1440");
         if (tempoMaximoMinutos == 0 || carenciaMinutos > tempoMaximoMinutos) {
-            throw new IllegalArgumentException("Limites de aluguel invalidos.");
+            throw new ConfiguracaoException("Limites de aluguel invalidos.");
         }
     }
 
@@ -38,9 +41,9 @@ public final class Tarifas {
             BigDecimal valor = new BigDecimal(config.getProperty(chave, padrao));
             if (valor.signum() >= 0) return valor;
         } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("Configuracao invalida: " + chave + ".", ex);
+            throw new ConfiguracaoException("Configuracao invalida: " + chave + ".", ex);
         }
-        throw new IllegalArgumentException("Configuracao invalida: " + chave + ".");
+        throw new ConfiguracaoException("Configuracao invalida: " + chave + ".");
     }
 
     private static long inteiro(Properties config, String chave, String padrao) {
@@ -48,8 +51,8 @@ public final class Tarifas {
             long valor = Long.parseLong(config.getProperty(chave, padrao));
             if (valor >= 0) return valor;
         } catch (NumberFormatException ex) {
-            throw new IllegalArgumentException("Configuracao invalida: " + chave + ".", ex);
+            throw new ConfiguracaoException("Configuracao invalida: " + chave + ".", ex);
         }
-        throw new IllegalArgumentException("Configuracao invalida: " + chave + ".");
+        throw new ConfiguracaoException("Configuracao invalida: " + chave + ".");
     }
 }

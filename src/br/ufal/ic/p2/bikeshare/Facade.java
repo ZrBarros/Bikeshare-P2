@@ -2,9 +2,6 @@ package br.ufal.ic.p2.bikeshare;
 
 import br.ufal.ic.p2.bikeshare.service.SistemaBikeShare;
 
-/**
- Facade
- */
 public class Facade {
 
     private static final String AINDA_NAO_IMPLEMENTADO = "Ainda não implementado.";

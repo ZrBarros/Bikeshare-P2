@@ -1,36 +1,18 @@
 package br.ufal.ic.p2.bikeshare.model.pagamento;
 
+import br.ufal.ic.p2.bikeshare.util.Valores;
 import java.io.Serializable;
 import java.math.BigDecimal;
+import java.util.Map;
 
-// Consultas específicas ficam nas implementações
 public interface MetodoPagamento extends Serializable {
     String nome();
+    Map<String, String> atributos();
 
     default void validarRetirada() { }
 
-    // Cartao e Pix aprovam a cobranca simulada; nao ha gateway externo.
+    // Cartao e Pix simulam aprovacao, sem integracao externa.
     default void cobrar(BigDecimal valor) {
-        if (valor.signum() < 0) throw new IllegalArgumentException("Valor deve ser nao-negativo.");
-    }
-
-    default String numeroCartao() {
-        throw new IllegalArgumentException("Usuario nao usa cartao.");
-    }
-
-    default String validadeCartao() {
-        throw new IllegalArgumentException("Usuario nao usa cartao.");
-    }
-
-    default String chavePix() {
-        throw new IllegalArgumentException("Usuario nao usa pix.");
-    }
-
-    default BigDecimal saldo() {
-        throw new IllegalArgumentException("Usuario nao usa saldo pre-carregado.");
-    }
-
-    default void recarregar(BigDecimal valor) {
-        throw new IllegalArgumentException("Usuario nao usa saldo pre-carregado.");
+        Valores.monetario(valor, "Valor", false);
     }
 }

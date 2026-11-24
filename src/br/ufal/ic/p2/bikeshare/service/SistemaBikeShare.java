@@ -1,7 +1,8 @@
 package br.ufal.ic.p2.bikeshare.service;
 
-import br.ufal.ic.p2.bikeshare.persistence.PersistenciaSistema;
+import br.ufal.ic.p2.bikeshare.exception.ConfiguracaoException;
 import br.ufal.ic.p2.bikeshare.model.Tarifas;
+import br.ufal.ic.p2.bikeshare.persistence.PersistenciaSistema;
 import java.io.IOException;
 import java.io.InputStream;
 import java.math.BigDecimal;
@@ -13,8 +14,7 @@ import java.util.Properties;
 public final class SistemaBikeShare {
     private final PersistenciaSistema persistencia = new PersistenciaSistema();
     private final Properties config = carregarConfiguracao();
-    private final BigDecimal mensalidadePadrao = new BigDecimal(
-            config.getProperty("plano.assinante.mensalidadePadrao", "30.00"));
+    private final BigDecimal mensalidadePadrao = configurarMensalidade();
     private final Tarifas tarifas = new Tarifas(config);
     private final int bateriaMinima = configurarBateriaMinima();
     private EstadoSistema estado = persistencia.carregar();
@@ -23,7 +23,8 @@ public final class SistemaBikeShare {
 
     private GestaoBicicletas bicicletas = new GestaoBicicletas(estado, estacoes);
 
-    private GestaoAlugueis alugueis = new GestaoAlugueis(estado, cadastro, estacoes, bicicletas, bateriaMinima, tarifas);
+    private GestaoAlugueis alugueis =
+            new GestaoAlugueis(estado, cadastro, estacoes, bicicletas, bateriaMinima, tarifas);
 
     public GestaoAlugueis alugueis() { return alugueis; }
     public GestaoBicicletas bicicletas() { return bicicletas; }
@@ -41,11 +42,26 @@ public final class SistemaBikeShare {
     public void encerrar() { persistencia.salvar(estado); }
 
     private int configurarBateriaMinima() {
-        int minimo = Integer.parseInt(config.getProperty("bicicleta.eletrica.bateriaMinima", "15"));
+        int minimo;
+        try {
+            minimo = Integer.parseInt(config.getProperty("bicicleta.eletrica.bateriaMinima", "15"));
+        } catch (NumberFormatException ex) {
+            throw new ConfiguracaoException("Bateria minima deve ser numerica.", ex);
+        }
         if (minimo < 0 || minimo > 100) {
-            throw new IllegalArgumentException("Bateria minima deve estar entre 0 e 100.");
+            throw new ConfiguracaoException("Bateria minima deve estar entre 0 e 100.");
         }
         return minimo;
+    }
+
+    private BigDecimal configurarMensalidade() {
+        try {
+            BigDecimal mensalidade = new BigDecimal(config.getProperty("plano.assinante.mensalidadePadrao", "30.00"));
+            if (mensalidade.signum() >= 0) return mensalidade;
+        } catch (NumberFormatException ex) {
+            throw new ConfiguracaoException("Mensalidade padrao invalida.", ex);
+        }
+        throw new ConfiguracaoException("Mensalidade padrao invalida.");
     }
 
     private static Properties carregarConfiguracao() {
@@ -55,7 +71,7 @@ public final class SistemaBikeShare {
             try (InputStream entrada = Files.newInputStream(arquivo)) {
                 config.load(entrada);
             } catch (IOException ex) {
-                throw new IllegalStateException("Nao foi possivel ler a configuracao.", ex);
+                throw new ConfiguracaoException("Nao foi possivel ler a configuracao.", ex);
             }
         }
         return config;

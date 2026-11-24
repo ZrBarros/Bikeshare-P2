@@ -1,44 +1,32 @@
 import easyaccept.EasyAccept;
+import java.util.ArrayList;
+import java.util.List;
 
 public class Main {
+    private static final String FACADE = "br.ufal.ic.p2.bikeshare.Facade";
 
     public static void main(String[] args) {
-        String facade = "br.ufal.ic.p2.bikeshare.Facade";
-        if (args.length > 0) {
-            for (String arquivo : args) {
-                EasyAccept.main(new String[]{facade, arquivo});
-            }
-            return;
+        if (args.length == 1 && "--m1".equals(args[0])) {
+            executar(arquivos(9));
+        } else if (args.length == 0) {
+            executar(arquivos(16));
+        } else {
+            executar(List.of(args));
         }
-        EasyAccept.main(new String[]{facade, "tests/us1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us1_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us2.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us3.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us3_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us4.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us4_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us5.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us5_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us6.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us6_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us7.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us8.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us8_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us9.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us9_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us10.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us10_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us11.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us11_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us12.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us12_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us13.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us13_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us14.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us14_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us15.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us15_1.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us16.txt"});
-        EasyAccept.main(new String[]{facade, "tests/us16_1.txt"});
+    }
+
+    private static List<String> arquivos(int ultimaHistoria) {
+        List<String> arquivos = new ArrayList<>();
+        for (int historia = 1; historia <= ultimaHistoria; historia++) {
+            arquivos.add("tests/us" + historia + ".txt");
+            if (historia != 2 && historia != 7) arquivos.add("tests/us" + historia + "_1.txt");
+        }
+        return arquivos;
+    }
+
+    private static void executar(List<String> arquivos) {
+        for (String arquivo : arquivos) {
+            EasyAccept.main(new String[]{FACADE, arquivo});
+        }
     }
 }

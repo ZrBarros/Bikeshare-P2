@@ -52,16 +52,14 @@ Este diretório parte dos arquivos do repositório original BikeShare: os script
 
 O código de domínio está em `src/br/ufal/ic/p2/bikeshare/model/`; a lógica de cadastro, em `service/`; a gravação e leitura do estado, em `persistence/`. A configuração `plano.assinante.mensalidadePadrao` fica em `config.properties` (valor inicial: 30,00). O estado é salvo em `bikeshare-state.bin` ao chamar `encerrarSistema` e restaurado quando uma nova `Facade` é criada. `zerarSistema` reinicia o estado em memória; a gravação ocorre ao encerrar.
 
-Para compilar e executar apenas os testes desta etapa, a partir da raiz deste diretório:
+Requer JDK 11 ou superior. Na raiz do projeto, compile e execute os testes do Milestone 1:
 
 ```sh
-javac -cp lib/easyaccept.jar -d out $(find src -name '*.java')
-for teste in us1 us1_1 us2 us3 us3_1 us4 us4_1 us5 us5_1 us6 us6_1 us7 us8 us8_1 us9 us9_1; do
-  java -cp out:lib/easyaccept.jar Main "tests/$teste.txt"
-done
+javac --release 11 -cp lib/easyaccept.jar -d out $(find src -name '*.java')
+java -cp out:lib/easyaccept.jar Main --m1
 ```
 
-Os scripts com sufixo `_1` são executados depois do respectivo script sem sufixo para validar a persistência em um novo processo. Sem argumentos, `Main` mantém a execução integral dos scripts originais, inclusive das US ainda não implementadas.
+Os scripts com sufixo `_1` verificam a persistência e são executados depois do respectivo script sem sufixo. O modo `--m1` roda apenas US1–US9. Sem argumentos, `Main` mantém a execução integral original (US1–US16), incluindo funcionalidades pendentes do M2. Para executar um script isolado, use `java -cp out:lib/easyaccept.jar Main tests/us1.txt`.
 
 
 Validação de US1–US9: 834 verificações aprovadas nos dezesseis scripts acima. O limite `bicicleta.eletrica.bateriaMinima` é configurável em `config.properties` (padrão: 15%).
@@ -84,3 +82,21 @@ Os parâmetros ficam em `config.properties` e são carregados na criação da `F
 O adicional da elétrica incide sobre toda a duração da corrida normal, mesmo dentro da franquia do assinante. Cancelamento e expiração não cobram tarifa nem adicional. Exatamente 1440 minutos ainda é uma corrida normal; acima disso, expira. A mensalidade não é debitada ao devolver. Valores monetários são calculados com `BigDecimal` e arredondados para centavos na cobrança.
 
 A validação foi executada em cópia temporária, com cada script em um processo separado. Para executar manualmente na pasta original, lembre que os scripts usam `zerarSistema` e `encerrarSistema`, substituindo o arquivo de estado local. Nenhum script fornecido foi alterado. Também foram verificados limites personalizados e a leitura de corridas em andamento salvas pela implementação anterior à US9.
+
+
+### Verificações do domínio
+
+Os testes adicionais em `tests/java/` verificam construtores e alterações inválidas, saldo preservado após recusa, transições de estado, coleções protegidas e falhas de persistência. Não substituem nem modificam os scripts fornecidos.
+
+```sh
+javac --release 11 -cp out:lib/easyaccept.jar -d out $(find tests/java -name '*.java')
+java -cp out:lib/easyaccept.jar br.ufal.ic.p2.bikeshare.service.VerificacaoDominio
+```
+
+São 64 verificações adicionais. Os testes de aceitação também foram executados em processos separados, totalizando 834 verificações aprovadas. A compilação com `--release 11` e a execução foram verificadas com JDK 26.
+
+### Organização
+
+`EstadoSistema` guarda os cadastros e contadores em campos privados. Os serviços acessam operações de cadastro/busca e cópias não modificáveis das coleções. Construtores e métodos do domínio validam seus próprios dados antes de alterar o estado.
+
+Bicicletas e aluguéis usam enums para os estados. A serialização mantém o formato anterior, de modo que os arquivos já salvos continuam legíveis. As exceções derivam de `BikeShareException`, distinguindo validação, entidade não encontrada, operação não permitida, configuração e persistência. Falhas técnicas preservam a causa.

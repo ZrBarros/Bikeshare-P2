@@ -1,10 +1,18 @@
 package br.ufal.ic.p2.bikeshare.service;
 
-import br.ufal.ic.p2.bikeshare.model.*;
-import br.ufal.ic.p2.bikeshare.model.pagamento.*;
+import br.ufal.ic.p2.bikeshare.exception.EntidadeNaoEncontradaException;
+import br.ufal.ic.p2.bikeshare.exception.OperacaoNaoPermitidaException;
+import br.ufal.ic.p2.bikeshare.exception.ValidacaoException;
+import br.ufal.ic.p2.bikeshare.model.PessoaFisica;
+import br.ufal.ic.p2.bikeshare.model.PessoaJuridica;
+import br.ufal.ic.p2.bikeshare.model.Plano;
+import br.ufal.ic.p2.bikeshare.model.PlanoAssinante;
+import br.ufal.ic.p2.bikeshare.model.PlanoAvulso;
+import br.ufal.ic.p2.bikeshare.model.Usuario;
+import br.ufal.ic.p2.bikeshare.model.pagamento.Cartao;
+import br.ufal.ic.p2.bikeshare.model.pagamento.Pix;
 import br.ufal.ic.p2.bikeshare.util.Valores;
 import java.math.BigDecimal;
-import java.util.Locale;
 
 // Regras de cadastro, consulta, alteração e exclusão de usuários.
 public final class CadastroUsuarios {
@@ -23,9 +31,7 @@ public final class CadastroUsuarios {
         Valores.obrigatorio(cpf, "CPF nao pode ser nulo.");
         Plano escolhido = escolherPlano(plano, mensalidade);
         garantirEmailLivre(email, null);
-        String id = "U" + estado.proximoUsuario++;
-        estado.usuarios.put(id, new PessoaFisica(id, nome, email, senha, cpf, escolhido));
-        return id;
+        return estado.cadastrarUsuario(id -> new PessoaFisica(id, nome, email, senha, cpf, escolhido));
     }
 
     public String criarPessoaJuridica(String nome, String email, String senha, String tipo,
@@ -36,116 +42,102 @@ public final class CadastroUsuarios {
         Valores.obrigatorio(razaoSocial, "Razao social nao pode ser nula.");
         Plano escolhido = escolherPlano(plano, mensalidade);
         garantirEmailLivre(email, null);
-        String id = "U" + estado.proximoUsuario++;
-        estado.usuarios.put(id, new PessoaJuridica(id, nome, email, senha, cnpj, razaoSocial, escolhido));
-        return id;
+        return estado.cadastrarUsuario(id ->
+                new PessoaJuridica(id, nome, email, senha, cnpj, razaoSocial, escolhido));
     }
 
     public String atributo(String id, String atributo) { return buscar(id).atributo(atributo); }
 
     public String porEmail(String email) {
         Valores.obrigatorio(email, "Email nao pode ser nulo.");
-        for (Usuario usuario : estado.usuarios.values()) {
+        for (Usuario usuario : estado.usuarios()) {
             if (usuario.email().equalsIgnoreCase(email)) return usuario.id();
         }
-        throw erro("Usuario nao existe.");
+        throw new EntidadeNaoEncontradaException("Usuario nao existe.");
     }
 
     public void alterar(String id, String atributo, String valor) {
         Usuario usuario = buscar(id);
-        if (atributo == null) throw erro("Atributo nao pode ser alterado.");
+        if (atributo == null) throw new OperacaoNaoPermitidaException("Atributo nao pode ser alterado.");
         switch (atributo) {
-            case "nome": usuario.nome(Valores.obrigatorio(valor, "Nome nao pode ser nulo.")); break;
-            case "email":
-                validarEmail(valor);
-                garantirEmailLivre(valor, id);
-                usuario.email(valor);
-                break;
-            case "senha": usuario.senha(Valores.obrigatorio(valor, "Senha nao pode ser nula.")); break;
-            case "plano":
-                if ("avulso".equals(valor)) usuario.plano(new PlanoAvulso());
-                else if ("assinante".equals(valor)) {
-                    if (!"assinante".equals(usuario.atributo("plano"))) {
-                        usuario.plano(new PlanoAssinante(mensalidadePadrao));
-                    }
-                } else throw erro("Plano invalido.");
-                break;
-            case "saldo":
-                if (!"saldoPreCarregado".equals(usuario.atributo("metodoPagamento"))) {
-                    throw erro("Usuario nao usa saldo pre-carregado.");
-                }
-                if (Valores.vazio(valor)) throw erro("Valor nao pode ser nulo.");
-                BigDecimal recarga;
-                try { recarga = new BigDecimal(valor.trim().replace(',', '.')); }
-                catch (NumberFormatException ex) { throw erro("Valor deve ser numerico."); }
-                if (recarga.signum() <= 0) throw erro("Valor deve ser positivo.");
-                usuario.recarregar(recarga);
-                break;
-            case "metodoPagamento":
-                if ("saldoPreCarregado".equals(valor)) usuario.usarCarteira();
-                else throw erro("Valor de metodo de pagamento invalido.");
-                break;
-            default: throw erro("Atributo nao pode ser alterado.");
+            case "nome": usuario.nome(valor); break;
+            case "email": alterarEmail(usuario, valor); break;
+            case "senha": usuario.senha(valor); break;
+            case "plano": alterarPlano(usuario, valor); break;
+            case "saldo": recarregar(usuario, valor); break;
+            case "metodoPagamento": selecionarCarteira(usuario, valor); break;
+            default: throw new OperacaoNaoPermitidaException("Atributo nao pode ser alterado.");
         }
+    }
+
+    private void alterarEmail(Usuario usuario, String email) {
+        Valores.email(email);
+        garantirEmailLivre(email, usuario.id());
+        usuario.email(email);
+    }
+
+    private void alterarPlano(Usuario usuario, String plano) {
+        if ("avulso".equals(plano)) usuario.plano(new PlanoAvulso());
+        else if ("assinante".equals(plano)) usuario.assinar(mensalidadePadrao);
+        else throw erro("Plano invalido.");
+    }
+
+    private void recarregar(Usuario usuario, String texto) {
+        usuario.validarRecarga();
+        BigDecimal valor = Valores.numero(texto, "Valor nao pode ser nulo.", "Valor deve ser numerico.");
+        usuario.recarregar(valor);
+    }
+
+    private void selecionarCarteira(Usuario usuario, String metodo) {
+        if (!"saldoPreCarregado".equals(metodo)) throw erro("Valor de metodo de pagamento invalido.");
+        usuario.usarCarteira();
     }
 
     public void alterarPix(String id, String atributo, String metodo, String chave) {
         Usuario usuario = buscar(id);
-        if (!"metodoPagamento".equals(atributo)) throw erro("Atributo nao pode ser alterado.");
+        if (!"metodoPagamento".equals(atributo)) {
+            throw new OperacaoNaoPermitidaException("Atributo nao pode ser alterado.");
+        }
         if (!"pix".equals(metodo)) throw erro("Valor de metodo de pagamento invalido.");
-        usuario.pagamento(new Pix(Valores.obrigatorio(chave, "Chave pix nao pode ser nula.")));
+        usuario.usarPix(new Pix(chave));
     }
 
     public void alterarCartao(String id, String atributo, String metodo, String numero, String validade) {
         Usuario usuario = buscar(id);
-        if (!"metodoPagamento".equals(atributo)) throw erro("Atributo nao pode ser alterado.");
+        if (!"metodoPagamento".equals(atributo)) {
+            throw new OperacaoNaoPermitidaException("Atributo nao pode ser alterado.");
+        }
         if (!"cartao".equals(metodo)) throw erro("Valor de metodo de pagamento invalido.");
-        Valores.obrigatorio(numero, "Numero do cartao nao pode ser nulo.");
-        Valores.obrigatorio(validade, "Validade do cartao nao pode ser nula.");
-        if (!validade.matches("(0[1-9]|1[0-2])/\\d{4}")) throw erro("Validade do cartao invalida.");
-        usuario.pagamento(new Cartao(numero, validade));
+        usuario.usarCartao(new Cartao(numero, validade));
     }
 
-    public void remover(String id) {
-        Usuario usuario = buscar(id);
-        if (usuario.aluguelAtivo() != null) throw erro("Nao e possivel remover usuario com aluguel em andamento.");
-        estado.usuarios.remove(id);
-    }
+    public void remover(String id) { estado.removerUsuario(id); }
 
-    Usuario buscar(String id) {
-        Valores.obrigatorio(id, "Identificacao do usuario nao pode ser nula.");
-        Usuario usuario = estado.usuarios.get(id);
-        if (usuario == null) throw erro("Usuario nao existe.");
-        return usuario;
-    }
+    Usuario buscar(String id) { return estado.usuario(id); }
 
     private void validarComuns(String nome, String email, String senha) {
         Valores.obrigatorio(nome, "Nome nao pode ser nulo.");
-        validarEmail(email);
+        Valores.email(email);
         Valores.obrigatorio(senha, "Senha nao pode ser nula.");
     }
 
-    private void validarEmail(String email) {
-        Valores.obrigatorio(email, "Email nao pode ser nulo.");
-        if (!email.matches("[^\\s@]+@[^\\s@]+\\.[^\\s@]+")) throw erro("Email invalido.");
-    }
-
     private void garantirEmailLivre(String email, String idAtual) {
-        for (Usuario usuario : estado.usuarios.values()) {
-            if (!usuario.id().equals(idAtual) && usuario.email().toLowerCase(Locale.ROOT)
-                    .equals(email.toLowerCase(Locale.ROOT))) throw erro("Email ja cadastrado.");
+        for (Usuario usuario : estado.usuarios()) {
+            if (!usuario.id().equals(idAtual) && usuario.email().equalsIgnoreCase(email)) {
+                throw new OperacaoNaoPermitidaException("Email ja cadastrado.");
+            }
         }
     }
 
     private Plano escolherPlano(String plano, String mensalidade) {
         if (plano == null) return new PlanoAvulso();
         if ("avulso".equals(plano)) {
-            if (!Valores.vazio(mensalidade)) throw erro("Plano nao possui mensalidade.");
+            if (!Valores.vazio(mensalidade)) throw new OperacaoNaoPermitidaException("Plano nao possui mensalidade.");
             return new PlanoAvulso();
         }
         if ("assinante".equals(plano)) return new PlanoAssinante(Valores.decimal(mensalidade, "Mensalidade", false));
         throw erro("Plano invalido.");
     }
 
-    private static IllegalArgumentException erro(String mensagem) { return new IllegalArgumentException(mensagem); }
+    private static ValidacaoException erro(String mensagem) { return new ValidacaoException(mensagem); }
 }
